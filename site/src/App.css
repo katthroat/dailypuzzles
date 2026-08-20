@@ -1,0 +1,764 @@
+/* ---------- Tokens ---------- */
+:root {
+  --paper: #f3e9dd;
+  --paper-raised: #e6cdbc;
+  --ink: #131425;
+  --ink-soft: #1c222b;
+  --rule: #a06e62;
+  --rule-strong: #704034;
+  --amber: #db924e;
+  --amber-soft: #f3c98a;
+  --red: #b33a3a;
+  --red-soft: #f1dcda;
+  --green: #76b360;
+  --green-soft: #c9dbc2;
+  --green-line: #529549;
+  --green-active: #2e7732;
+  --blue: #676694;
+  --blue-soft: #d1d1d8;
+
+  --font-display: "Special Elite", "Courier New", monospace;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+
+  --radius: 3px;
+  --tap-min: 44px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  padding: 20px clamp(16px, 4vw, 40px) 14px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper-raised);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.site-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 32px);
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.site-tagline {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+#app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---------- Puzzle list ---------- */
+.puzzle-list-wrap {
+  padding: clamp(16px, 4vw, 40px);
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.puzzle-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.puzzle-card__button {
+  width: 100%;
+  text-align: left;
+  background: var(--paper-raised);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  min-height: var(--tap-min);
+  position: relative;
+  box-shadow: 3px 3px 0 var(--rule);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.puzzle-card__button:hover,
+.puzzle-card__button:focus-visible {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--rule);
+}
+.puzzle-card__button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--rule);
+}
+
+.puzzle-card__title {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+.puzzle-card__meta {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.empty-state {
+  border: 2px dashed var(--rule);
+  border-radius: var(--radius);
+  padding: 28px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* ---------- Home ---------- */
+.home-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(16px, 4vw, 40px);
+}
+
+/* ---------- Solver layout ---------- */
+/* Two genuinely separate boxes, not one grid trying to do both jobs:
+   - .solver-screen holds the toolbar, current clue, crossword, and hint
+     controls.
+   - .clue-rail holds the full clue list. On mobile it's given a fixed
+     height slice of the screen (see the media query below) and scrolls
+     its own contents via .clue-columns, rather than letting its full
+     content height push the page taller than one viewport.
+   Keeping their sizing rules separate means the crossword never has to
+   compete with the clue list's real (often much taller) content for
+   space - that fight is what collapsed the crossword down to a few
+   pixels in earlier versions of this layout. */
+.solver {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+}
+
+.solver-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.solver > *,
+.solver-screen > * {
+  /* Everything below defaults to a min-width floored at its own
+     unwrapped content size (e.g. the hint toolbar's two controls side
+     by side) - wider than the column on a narrow phone, which forces
+     the whole page to scroll sideways. min-width: 0 lets each child
+     actually shrink down to and wrap within its real column width. */
+  min-width: 0;
+}
+
+.solver-toolbar-top,
+.clue-bar,
+.hint-toolbar,
+.solved-banner {
+  flex: none;
+}
+
+.solver-toolbar-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px clamp(12px, 3vw, 28px);
+  border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+
+.back-link {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--ink);
+  text-decoration: underline;
+  padding: 6px 4px;
+  min-height: var(--tap-min);
+}
+
+.solver-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  margin-right: auto;
+}
+
+.progress-note {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+/* current clue - pinned to the top of the screen: sticky so it stays
+   visible even once the page is scrolled down into the clue list. */
+.clue-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px clamp(12px, 3vw, 20px);
+  background: var(--paper-raised);
+  border-bottom: 2px solid var(--ink);
+  font-size: 14px;
+  min-height: 44px;
+}
+
+.clue-bar__num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.clue-bar__dir {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  flex: none;
+}
+
+/* Shrinks via inline font-size (set in JS) instead of wrapping, as long
+   as that keeps it on one line. If it's already at the minimum font size
+   and still doesn't fit, JS adds .wrap so it flows onto a second line
+   instead of being truncated - a clue should never be cut off. */
+.clue-bar__text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.clue-bar__text.wrap {
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.25;
+}
+
+.dir-toggle {
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 5px 9px;
+  font-size: 11px;
+  min-height: 32px;
+  flex: none;
+}
+
+/* ---------- Grid ---------- */
+.grid-pane {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2px, 1vw, 8px) clamp(6px, 2.5vw, 18px);
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+  /* Lets the crossword grid size itself against this pane's actual box
+     (in both dimensions) via cqw/cqh units below, so it always fits
+     within whatever space is left - the classic flex trick of sizing a
+     square to fit inside a box, without JS measurement. Requires
+     .solver-screen above to have a genuinely definite height, which it
+     now always does (see the "Solver layout" section). */
+  container-type: size;
+}
+
+.crossword-grid {
+  display: grid;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  gap: 1px;
+  width: min(96cqw, 96cqh, 640px);
+  aspect-ratio: 1 / 1;
+  touch-action: manipulation;
+}
+
+.cell {
+  position: relative;
+  background: var(--paper-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(11px, 3.4vw, 22px);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cell.block {
+  background: var(--ink);
+}
+
+.cell:not(.block) {
+  cursor: pointer;
+}
+
+.cell__number {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-family: var(--font-body);
+  font-size: clamp(6px, 1.6vw, 9px);
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1;
+}
+
+.cell.in-word:not(.block) {
+  background: var(--amber-soft);
+}
+.cell.active-cell:not(.block) {
+  background: var(--amber);
+}
+
+.cell.state-revealed:not(.block) {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.cell.active-cell.state-revealed {
+  background: var(--blue);
+  color: var(--paper);
+}
+
+/* Highlight Correct Words toggle - only ever applied to fully filled,
+   fully correct words (see updateWordHighlights in app.js), never to a
+   single correct letter on its own. Comes after state-revealed so a
+   completed word reads as green even if a letter in it was revealed.
+   These cells stay selectable (to review a solved word) but not
+   editable - see isLocked/setLetter in app.js - so the cursor can land
+   here and gets its own darker shade to stand out from a plain
+   completed cell. */
+.cell.word-correct:not(.block) {
+  background: var(--green-soft);
+}
+
+/* A correct cell that's part of the currently selected word gets a
+   dimmer in-between shade - more visible than a plain correct cell
+   elsewhere on the board, but still clearly duller than the cell the
+   cursor is actually sitting on. Same specificity as the active-cell
+   rule below (word/in-word cells are never .block, so :not(.block)
+   here would only inflate specificity and wrongly outrank it) - this
+   rule must stay before that one so the tie resolves in its favor. */
+.cell.in-word.word-correct {
+  background: var(--green-line);
+}
+
+.cell.active-cell.word-correct {
+  background: var(--green-active);
+  color: var(--paper);
+}
+
+/* Word-divider lines: painted as pseudo-elements directly over the grid's
+   1px gap (rather than a plain border) so the dotted pattern fully
+   replaces the solid gap line instead of sitting beside it. Sized to
+   read as a thinner, zoomed-out version of the grid's own 1px lines. */
+.cell.break-right:not(.block),
+.cell.break-bottom:not(.block) {
+  z-index: 1;
+}
+
+.cell.break-right:not(.block)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -1px;
+  width: 2px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--ink) 0,
+    var(--ink) 1.5px,
+    var(--paper-raised) 1.5px,
+    var(--paper-raised) 3px
+  );
+  pointer-events: none;
+}
+
+.cell.break-bottom:not(.block)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--ink) 0,
+    var(--ink) 1.5px,
+    var(--paper-raised) 1.5px,
+    var(--paper-raised) 3px
+  );
+  pointer-events: none;
+}
+
+/* Restore the grid lines to their original (non-"zoomed out") thickness
+   on desktop - the thinner base values above are for mobile, where the
+   whole grid renders smaller and the default thickness read as
+   proportionally heavier. */
+@media (min-width: 781px) {
+  .crossword-grid {
+    border-width: 2px;
+  }
+  .cell.break-right:not(.block)::before {
+    right: -2px;
+    width: 4px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--ink) 0,
+      var(--ink) 3px,
+      var(--paper-raised) 3px,
+      var(--paper-raised) 6px
+    );
+  }
+  .cell.break-bottom:not(.block)::after {
+    bottom: -2px;
+    height: 4px;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--ink) 0,
+      var(--ink) 3px,
+      var(--paper-raised) 3px,
+      var(--paper-raised) 6px
+    );
+  }
+
+  /* Compact desktop puzzle chrome. Now that body.is-puzzle-view pins the
+     whole view to one viewport (see the rule above .clue-rail), every bit
+     of vertical space these bars take is space the grid doesn't get - so
+     they're trimmed down here rather than left at their touch-friendly
+     mobile sizing, which desktop doesn't need. */
+  body.is-puzzle-view .site-header {
+    padding: 10px clamp(16px, 3vw, 32px) 8px;
+  }
+  body.is-puzzle-view .site-title {
+    font-size: 20px;
+  }
+  body.is-puzzle-view .site-tagline {
+    font-size: 12px;
+  }
+  .solver-toolbar-top {
+    padding: 6px clamp(12px, 3vw, 24px);
+  }
+  .clue-bar {
+    min-height: 36px;
+    padding: 6px clamp(12px, 3vw, 20px);
+  }
+  .hint-toolbar {
+    padding: 6px clamp(12px, 3vw, 20px);
+  }
+  .hint-btn {
+    padding: 5px 10px;
+    min-height: 30px;
+  }
+  .clue-rail {
+    width: 300px;
+  }
+  .clue-tab {
+    padding: 7px 10px;
+    min-height: 34px;
+  }
+  .clue-item {
+    padding: 5px 12px;
+    min-height: 28px;
+    font-size: 12.5px;
+  }
+}
+
+.sr-input {
+  /* position: fixed (not absolute) so this stays anchored to the
+     viewport itself, not the document. An absolutely/statically
+     positioned focused input can make mobile Safari/Firefox re-scroll
+     the page to keep it "in view" any time its position changes
+     (even without an explicit .focus() call) - which is what caused
+     the up/down snapping while typing. Pinning it to the viewport
+     means it's always already in view, so there's nothing to scroll. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  /* iOS auto-zooms the page on focusing an input with a computed
+     font-size under 16px, which can also look like a "jump". */
+  font-size: 16px;
+  pointer-events: none;
+}
+
+/* ---------- Clue rail (desktop sidebar / mobile: scrolling panel below the grid) ---------- */
+.clue-rail {
+  width: 340px;
+  flex: none;
+  border-left: 2px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--paper-raised);
+}
+
+/* Keep the whole puzzle view - header, crossword screen, clue rail - within
+   one viewport at every width, not just on mobile. Without this, body only
+   has a min-height, so once .solver's content (in particular the clue
+   list) wants more room than the viewport, body grows past 100vh and the
+   whole page scrolls instead of just the clue list. svh (not dvh) so a
+   mobile on-screen keyboard doesn't resize this and jostle the grid
+   mid-type; on desktop, where there's no keyboard to worry about, svh and
+   dvh are equivalent anyway. .clue-columns (overflow: auto, further down)
+   is what actually scrolls once the clue list outgrows its box. */
+body.is-puzzle-view {
+  height: 100vh;
+  height: 100svh;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+}
+body.is-puzzle-view #app {
+  overflow: hidden;
+}
+body.is-puzzle-view .solver {
+  overflow: hidden;
+}
+
+@media (max-width: 780px) {
+  .solver {
+    flex-direction: column;
+  }
+  .solver-screen {
+    /* Takes whatever's left of the one-screen-tall .solver after
+       .clue-rail claims its fixed slice below - see .clue-rail and
+       body.is-puzzle-view rules for how that total is pinned to one
+       viewport (svh, not dvh, for the same keyboard-stability reasons
+       described there: the crossword shouldn't visibly resize while
+       typing - only the focused cell needs to be scrolled into view,
+       handled separately by freezeScrollBriefly in app.js). */
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  /* The top bar (back link + title) is dropped entirely on mobile to
+     give the grid more vertical room - its "All puzzles" link reappears
+     as .hint-back-link in the bottom hint toolbar instead. Selector here
+     is deliberately more specific than the base ".hint-back-link { display:
+     none }" rule (further down the file, in the "Bottom toolbar" section)
+     so this override always wins regardless of source order. */
+  .solver-toolbar-top {
+    display: none;
+  }
+  .hint-toolbar .hint-back-link {
+    display: inline-block;
+    order: -1;
+  }
+  .clue-rail {
+    width: auto;
+    border-left: none;
+    border-top: 2px solid var(--ink);
+    /* Fixed slice of the one-screen layout rather than sized to its own
+       (much taller) content - .clue-columns below scrolls internally so
+       the full clue list is always reachable without the page itself
+       growing past one screen. */
+    flex: 0 0 clamp(160px, 30svh, 300px);
+    min-height: 0;
+  }
+  body.is-puzzle-view .site-header {
+    display: none;
+  }
+}
+
+.clue-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--rule);
+}
+.clue-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-height: var(--tap-min);
+  border-bottom: 3px solid transparent;
+}
+.clue-tab[aria-selected="true"] {
+  border-bottom-color: var(--amber);
+}
+
+.clue-columns {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.clue-group {
+  display: none;
+}
+.clue-group.is-visible {
+  display: block;
+}
+
+.clue-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.clue-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 14px;
+  font-size: 13px;
+  display: flex;
+  gap: 10px;
+  min-height: var(--tap-min);
+  align-items: baseline;
+}
+.clue-item:hover {
+  background: var(--paper);
+}
+.clue-item.is-active {
+  background: var(--amber-soft);
+}
+.clue-item.is-done {
+  color: var(--ink-soft);
+}
+.clue-item__num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  flex: none;
+  min-width: 22px;
+}
+
+/* ---------- Bottom toolbar (hints) ---------- */
+.hint-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px clamp(12px, 3vw, 20px);
+  border-top: 2px solid var(--ink);
+  background: var(--paper-raised);
+}
+
+.hint-btn {
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 12px;
+  min-height: 38px;
+}
+.hint-btn--reveal:hover {
+  background: var(--blue-soft);
+}
+
+/* Stands in for .solver-toolbar-top's "All puzzles" link on mobile, where
+   that whole top bar is hidden to give the grid more room - see the
+   media query below. Hidden here on desktop where the top bar (with its
+   own back-link) is already visible, so there's no duplicate. */
+.hint-back-link {
+  display: none;
+}
+
+.hint-toggle-btn[aria-pressed="true"] {
+  background: var(--green-soft);
+  border-color: var(--green);
+}
+
+/* ---------- Completion banner ---------- */
+.solved-banner {
+  margin: 8px clamp(12px, 3vw, 20px) 0;
+  padding: 10px 14px;
+  background: var(--green-soft);
+  border: 2px solid var(--green);
+  border-radius: var(--radius);
+  color: #274c37;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hints-used-note {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---------- Utility ---------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
